@@ -8,9 +8,7 @@ class Board:
 	# создание поля
 	def __init__(self, width):
 		self.width = width
-		# self.board = [[0] * width for _ in range(width)]
 		self.board = [[[0, 1] for __ in range(width)] for _ in range(width)]
-		print(*self.board, sep='\n')
 		# значения по умолчанию
 		self.border = 10
 		self.font_size = 30
@@ -49,13 +47,10 @@ class Board:
 		empty = self.get_empty(self.board)
 		if empty:
 			x, y = random.choice(empty)
-			# variants = set(itertools.chain(*self.board))
-			# variants = set(itertools.chain(*list(list(j[0] for j in i) for i in self.board)))
-			variants = set(2 ** i for i in range(1, 6))
-			variants.discard(0)
-			self.board[y][x] = [random.choice(list(variants)), 1]
+			self.board[y][x] = [random.choice([2, 4]), 1]
 			if not self.check_if_lose():
 				return
+		self.render()
 		self.lose()
 
 	def get_empty(self, board):
@@ -70,7 +65,7 @@ class Board:
 	def check_if_lose(self):
 		# если пустых клеток нет
 		if not self.get_empty(self.board):
-			for vector in itertools.product(range(2), range(2)):
+			for vector in [(-1, 0), (0, -1), (0, 1), (1, 0)]:
 				if self.get_empty(self.fake_board(vector)):
 					# если хотя бы при одном варианте хода появятся пустые клетки
 					return False
@@ -101,7 +96,7 @@ class Board:
 				x = j * self.cell_size + self.border
 				y = i * self.cell_size + self.border
 				item = self.board[j][i][0]
-				if item:
+				if item in self.colors:
 					pygame.draw.ellipse(screen, self.colors[item], (x + 1, y + 1, self.cell_size - 2, self.cell_size - 2))
 				if item:
 					self.fill_text_into_cell(item, j, i)
@@ -148,7 +143,11 @@ class Board:
 		for i in y_range:
 			for j in x_range:
 				item, item_is_allowed_to_merge = board[i][j]
-				new, new_is_allowed_to_merge = board[i + y][j + x]
+				try:
+					new, new_is_allowed_to_merge = board[i + y][j + x]
+				except IndexError:
+					print(i, j, x, y)
+					raise IndexError
 				if not item:
 					continue
 				elif not new:
@@ -176,38 +175,8 @@ class Board:
 			vector = 0
 		if key in range(273, 277):
 			self.board = list(list([j[0], 1] for j in i) for i in self.board)
-			self.merge(vector, self.board)
+			self.merge(vector, self.board, 1)
 			self.next_move()
-
-	def get_cell(self, mouse_pos):
-		x, y = mouse_pos
-		# - border
-		x -= self.border
-		y -= self.border
-		# если клик не по полю
-		if not 0 <= x <= self.width * self.cell_size or not 0 <= y <= self.width * self.cell_size:
-			return None
-		# indexes
-		i = y // self.cell_size
-		j = x // self.cell_size
-		return j, i
-
-	def on_click(self, cell_coords):
-		if cell_coords is None:
-			return
-		x, y = cell_coords
-		# 1 на 0, 0 на 1
-		for i in range(self.width):
-			self.board[i][x] = 1 - self.board[i][x]
-		for j in range(self.width):
-			self.board[y][j] = 1 - self.board[y][j]
-		self.board[y][x] = 1 - self.board[y][x]
-
-	def get_click(self, mouse_pos):
-		# координаты клетки
-		cell = self.get_cell(mouse_pos)
-	# обработка
-	# self.on_click(cell)
 
 
 pygame.init()
