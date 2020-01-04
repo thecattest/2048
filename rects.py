@@ -1,7 +1,6 @@
 import pygame
 import random
 import copy
-import itertools
 
 
 class Board:
