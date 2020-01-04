@@ -8,8 +8,9 @@ class Board:
 	# создание поля
 	def __init__(self, width):
 		self.width = width
-		# self.board = [[random.choice([2 ** random.randint(1, 10), 0]) for _ in range(width)] for _ in range(width)]
-		self.board = [[0] * width for _ in range(width)]
+		# self.board = [[0] * width for _ in range(width)]
+		self.board = [[[0, 1] for __ in range(width)] for _ in range(width)]
+		print(*self.board, sep='\n')
 		# значения по умолчанию
 		self.border = 10
 		self.font_size = 30
@@ -48,10 +49,11 @@ class Board:
 		empty = self.get_empty(self.board)
 		if empty:
 			x, y = random.choice(empty)
-			variants = set(itertools.chain(*self.board))
-			variants.add(2)
+			# variants = set(itertools.chain(*self.board))
+			# variants = set(itertools.chain(*list(list(j[0] for j in i) for i in self.board)))
+			variants = set(2 ** i for i in range(1, 6))
 			variants.discard(0)
-			self.board[y][x] = random.choice(list(variants))
+			self.board[y][x] = [random.choice(list(variants)), 1]
 			if not self.check_if_lose():
 				return
 		self.lose()
@@ -60,7 +62,8 @@ class Board:
 		empty = []
 		for i in range(self.width):
 			for j in range(self.width):
-				if not board[i][j]:
+				# if not board[i][j]:
+				if not board[i][j][0]:
 					empty.append((j, i))
 		return empty
 
@@ -79,13 +82,13 @@ class Board:
 	def check_if_win(self):
 		for i in range(self.width):
 			for j in range(self.width):
-				if self.board[i][j] >= 2048:
+				if self.board[i][j][0] >= 2048:
 					return True
 		return False
 
 	def fake_board(self, vector):
 		board = copy.deepcopy(self.board)
-		self.shift(vector, board)
+		self.merge(vector, board)
 		return board
 
 	def render(self):
@@ -97,7 +100,7 @@ class Board:
 				# координаты клетки
 				x = j * self.cell_size + self.border
 				y = i * self.cell_size + self.border
-				item = self.board[j][i]
+				item = self.board[j][i][0]
 				if item:
 					pygame.draw.ellipse(screen, self.colors[item], (x + 1, y + 1, self.cell_size - 2, self.cell_size - 2))
 				if item:
@@ -126,59 +129,55 @@ class Board:
 		screen.blit(text, (text_x, text_y))
 		pygame.display.flip()
 
-	def shift_one(self, vector, x, y, board):
-		x_possible, y_possible = x + vector[0], y + vector[1]
-		try:
-			possible = board[y_possible][x_possible]
-			item = board[y][x]
-		except IndexError:
-			return
-		if possible == 0:
-			new = item
-			old = 0
-		elif possible == item:
-			new = item * 2
-			old = 0
-		else:
-			new = possible
-			old = item
-		board[y][x] = old
-		board[y_possible][x_possible] = new
-		if not possible:
-			self.shift_one(vector, x_possible, y_possible, board)
-
-	def shift_col(self, y, i, board):
-		for j in range(self.width):
-			self.shift_one((0, y), j, i, board)
-
-	def shift_row(self, x, j, board):
-		for i in range(self.width):
-			self.shift_one((x, 0), j, i, board)
-
-	def shift(self, vector, board):
-		for i in range(1, self.width):
-			if vector == (1, 0):
-				self.shift_col(1, self.width - i - 1, board)
-			elif vector == (-1, 0):
-				self.shift_col(-1, i, board)
-			elif vector == (0, 1):
-				self.shift_row(1, self.width - i - 1, board)
-			elif vector == (0, -1):
-				self.shift_row(-1, i, board)
+	def merge(self, vector, board, auto_render=0):
+		x, y = vector
+		before = copy.deepcopy(board)
+		# board = list(list([j, 1] for j in i) for i in board)
+		x_range = range(len(board))
+		y_range = range(len(board))
+		if not x:
+			if y == 1:
+				y_range = range(len(board) - 2, -1, -1)
+			elif y == -1:
+				y_range = range(1, len(board))
+		elif not y:
+			if x == 1:
+				x_range = range(len(board) - 2, -1, -1)
+			elif x == -1:
+				x_range = range(1, len(board))
+		for i in y_range:
+			for j in x_range:
+				item, item_is_allowed_to_merge = board[i][j]
+				new, new_is_allowed_to_merge = board[i + y][j + x]
+				if not item:
+					continue
+				elif not new:
+					board[i][j] = [0, 1]
+					board[i + y][j + x] = [item, item_is_allowed_to_merge]
+				elif new == item and item_is_allowed_to_merge and new_is_allowed_to_merge:
+					board[i][j] = [0, 1]
+					board[i + y][j + x] = [item * 2, 0]
+		# board = list(list(j[0] for j in i) for i in board)
+		if auto_render:
+			self.render()
+		if before != board:
+			self.merge(vector, board, auto_render)
 
 	def move(self, key):
 		if key == 273:
-			vector = (0, -1)
-		elif key == 274:
-			vector = (0, 1)
-		elif key == 275:
-			vector = (1, 0)
-		elif key == 276:
 			vector = (-1, 0)
+		elif key == 274:
+			vector = (1, 0)
+		elif key == 275:
+			vector = (0, 1)
+		elif key == 276:
+			vector = (0, -1)
 		else:
-			vector = (0, 0)
-		self.shift(vector, self.board)
-		self.next_move()
+			vector = 0
+		if key in range(273, 277):
+			self.board = list(list([j[0], 1] for j in i) for i in self.board)
+			self.merge(vector, self.board)
+			self.next_move()
 
 	def get_cell(self, mouse_pos):
 		x, y = mouse_pos
