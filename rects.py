@@ -54,9 +54,8 @@ class Board:
 
 	def get_empty(self, board):
 		empty = []
-		for i in range(self.width):
-			for j in range(self.width):
-				# if not board[i][j]:
+		for i in range(len(board)):
+			for j in range(len(board)):
 				if not board[i][j][0]:
 					empty.append((j, i))
 		return empty
@@ -65,6 +64,7 @@ class Board:
 		# если пустых клеток нет
 		if not self.get_empty(self.board):
 			for vector in [(-1, 0), (0, -1), (0, 1), (1, 0)]:
+				print(*self.fake_board(vector), vector, sep='\n', end='\n=====\n')
 				if self.get_empty(self.fake_board(vector)):
 					# если хотя бы при одном варианте хода появятся пустые клетки
 					return False
@@ -82,6 +82,7 @@ class Board:
 
 	def fake_board(self, vector):
 		board = copy.deepcopy(self.board)
+		board = list(list([j[0], 1] for j in i) for i in board)
 		self.merge(vector, board)
 		return board
 
@@ -142,11 +143,7 @@ class Board:
 		for i in y_range:
 			for j in x_range:
 				item, item_is_allowed_to_merge = board[i][j]
-				try:
-					new, new_is_allowed_to_merge = board[i + y][j + x]
-				except IndexError:
-					print(i, j, x, y)
-					raise IndexError
+				new, new_is_allowed_to_merge = board[i + y][j + x]
 				if not item:
 					continue
 				elif not new:
@@ -155,7 +152,6 @@ class Board:
 				elif new == item and item_is_allowed_to_merge and new_is_allowed_to_merge:
 					board[i][j] = [0, 1]
 					board[i + y][j + x] = [item * 2, 0]
-		# board = list(list(j[0] for j in i) for i in board)
 		if auto_render:
 			self.render()
 		if before != board:
@@ -188,9 +184,6 @@ while running:
 	for event in pygame.event.get():
 		if event.type == pygame.QUIT:
 			running = False
-		if event.type == pygame.MOUSEBUTTONDOWN:
-			# обработка кликов
-			board.get_click(event.pos)
 		if event.type == pygame.KEYUP:
 			board.move(event.key)
 	board.render()
