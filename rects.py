@@ -66,8 +66,9 @@ class Board:
 				x = j * self.cell_size + self.border
 				y = i * self.cell_size + self.border + self.extra_top_border
 				item = self.board[j][i][0]
+				pygame.draw.rect(screen, pygame.Color('gray'), (x, y, self.cell_size, self.cell_size), 3)
 				if item in self.colors:
-					pygame.draw.ellipse(screen, self.colors[item], (x + 1, y + 1, self.cell_size - 2, self.cell_size - 2))
+					pygame.draw.ellipse(screen, self.colors[item], (x + 3, y + 3, self.cell_size - 6, self.cell_size - 6))
 				if item:
 					self.fill_text_into_cell(item, j, i)
 		pygame.display.flip()
@@ -131,7 +132,7 @@ class Board:
 		text = font.render(text, 1, pygame.Color('white'))
 		text_w, text_h = text.get_width(), text.get_height()
 		text_x = (self.cell_size * self.width + self.border - text_w) // 2
-		text_y = (self.cell_size * self.width + self.border - text_h) // 2
+		text_y = (self.cell_size * self.width + self.border - text_h) // 2 + self.extra_top_border
 		pygame.draw.rect(screen, (200, 0, 0), (text_x - 5, text_y - 5, text_w + 10, text_h + 10))
 		pygame.draw.rect(screen, (0, 200, 0), (text_x - 5, text_y - 5, text_w + 10, text_h + 10), 4)
 		screen.blit(text, (text_x, text_y))
@@ -185,8 +186,11 @@ class Board:
 			vector = 0
 		if key in range(273, 277):
 			self.board = list(list([j[0], 1] for j in i) for i in self.board)
+			board_before = copy.deepcopy(self.board)
 			self.merge(vector, self.board, 1)
-			self.next_move()
+			self.board = list(list([j[0], 1] for j in i) for i in self.board)
+			if board_before != self.board:
+				self.next_move()
 
 
 pygame.init()
