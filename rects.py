@@ -8,15 +8,27 @@ class Board:
 	def __init__(self, width):
 		self.width = width
 		self.board = [[[0, 1] for __ in range(width)] for _ in range(width)]
-		# значения по умолчанию
+		# sizes
 		self.border = 20
 		self.extra_top_border = 40
+		self.extra_bottom_border = 50
 		self.font_size = 30
-		self.cell_size = 50
+		self.cell_size = 60
+		# default values
 		self.score = 0
 		self.running = True
+		self.last = copy.deepcopy(self.board)
+		# some methods
 		self.create_screen()
 		self.next_move()
+		self.next_move()
+		# revert button
+		self.enable_to_revert = False
+		self.revert_x = int(self.width * self.cell_size * .2 - self.extra_top_border + self.border) // 2 + self.width * self.cell_size * .8 + self.border
+		self.revert_y = 0
+		self.revert_w = self.extra_top_border
+		self.revert_h = self.extra_top_border
+		# cells colors
 		self.colors = {2: (100, 100, 100), 4: (200, 200, 0), 8: (255, 105, 0), 16: (255, 43, 0),
 		               32: (21, 171, 0), 64: (178, 102, 255), 128: (255, 8, 127), 256: (46, 139, 90),
 		               512: (130, 120, 255), 1024: (0, 0, 255), 2048: (100, 100, 55)
@@ -25,7 +37,7 @@ class Board:
 	def create_screen(self):
 		global screen
 		width = self.width * self.cell_size + self.border * 2
-		height = width + self.extra_top_border
+		height = width + self.extra_top_border + self.extra_bottom_border
 		screen = pygame.display.set_mode((width, height))
 
 	# настройка внешнего вида
@@ -46,20 +58,28 @@ class Board:
 		screen.blit(text, (text_x, text_y))
 
 	def display_score(self):
-		pygame.draw.rect(screen, pygame.Color('white'), (self.border, 0, self.width * self.cell_size, self.extra_top_border))
+		k = .8 if self.enable_to_revert else 1
+		pygame.draw.rect(screen, pygame.Color('white'), (self.border, 0, int(self.width * self.cell_size * k), self.extra_top_border))
 		fz = self.font_size + 5 - len(str(self.score))
 		font = pygame.font.Font(None, fz)
 		text = font.render(str(self.score), 1, pygame.Color('black'))
 		text_w, text_h = text.get_width(), text.get_height()
-		text_x = self.border + (self.width * self.cell_size - text_w) // 2
+		text_x = self.border + (int(self.width * self.cell_size * k) - text_w) // 2
 		text_y = (self.extra_top_border - text_h) // 2
 		screen.blit(text, (text_x, text_y))
+
+	def update_revert_button(self):
+		if not self.enable_to_revert:
+			return
+		color = (255, 255, 255)
+		pygame.draw.rect(screen, color, (self.revert_x, self.revert_y, self.revert_w, self.revert_h))
 
 	def render(self):
 		if not self.running:
 			return
 		screen.fill((0, 0, 0))
 		self.display_score()
+		self.update_revert_button()
 		for i in range(self.width):
 			for j in range(self.width):
 				# координаты клетки
@@ -79,9 +99,17 @@ class Board:
 			x, y = random.choice(empty)
 			self.board[y][x] = [random.choice([2, 4]), 1]
 			if not self.check_if_lose():
+				self.enable_to_revert = True
 				return
 		self.render()
 		self.lose()
+
+	def revert(self):
+		if not self.enable_to_revert:
+			return
+		self.board = copy.deepcopy(self.last)
+		self.enable_to_revert = False
+		self.render()
 
 	def get_empty(self, board):
 		empty = []
@@ -185,12 +213,18 @@ class Board:
 		else:
 			vector = 0
 		if key in range(273, 277):
+			self.last = copy.deepcopy(self.board)
 			self.board = list(list([j[0], 1] for j in i) for i in self.board)
 			board_before = copy.deepcopy(self.board)
 			self.merge(vector, self.board, 1)
 			self.board = list(list([j[0], 1] for j in i) for i in self.board)
 			if board_before != self.board:
 				self.next_move()
+
+	def on_click(self, pos):
+		x, y = pos
+		if self.revert_x <= x <= self.revert_x + self.revert_w and self.revert_y <= y <= self.revert_y + self.revert_h:
+			self.revert()
 
 
 pygame.init()
@@ -205,5 +239,7 @@ while running:
 			running = False
 		if event.type == pygame.KEYUP:
 			board.move(event.key)
+		if event.type == pygame.MOUSEBUTTONUP:
+			board.on_click(event.pos)
 	board.render()
 pygame.quit()
