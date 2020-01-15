@@ -98,7 +98,6 @@ class Board:
 		self.new_game.rect.x = self.border
 		self.new_game.rect.y = 0
 
-
 	def update_revert_button(self):
 		if not self.enable_to_revert:
 			self.arrow.rect.x = -1000
@@ -191,6 +190,9 @@ class Board:
 		self.alert(text)
 		self.running = False
 
+	def new_game(self):
+		self.__init__()
+
 	def alert(self, text):
 		fz = self.cell_size // 2 + self.width
 		font = pygame.font.Font(None, fz)
@@ -261,6 +263,8 @@ class Board:
 		x, y = pos
 		if self.revert_x <= x <= self.revert_x + self.revert_w and self.revert_y <= y <= self.revert_y + self.revert_h:
 			self.revert()
+		elif self.border <= x <= self.border + 40 and 0 <= y <= 40:
+			self.__init__(self.width)
 
 
 pygame.init()
