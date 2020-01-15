@@ -1,6 +1,20 @@
 import pygame
 import random
 import copy
+import os
+
+
+def load_image(name, colorkey=None):
+	fullname = os.path.join('data', name)
+	image = pygame.image.load(fullname).convert()
+	if colorkey is not None:
+		if colorkey == -1:
+			colorkey = image.get_at((0, 0))
+			print(colorkey)
+		image.set_colorkey(colorkey)
+	else:
+		image = image.convert_alpha()
+	return image
 
 
 class Board:
@@ -11,9 +25,9 @@ class Board:
 		# sizes
 		self.border = 20
 		self.extra_top_border = 40
-		self.extra_bottom_border = 50
+		self.extra_bottom_border = 0
 		self.font_size = 30
-		self.cell_size = 60
+		self.cell_size = 70
 		# default values
 		self.score = 0
 		self.running = True
@@ -28,6 +42,7 @@ class Board:
 		self.revert_y = 0
 		self.revert_w = self.extra_top_border
 		self.revert_h = self.extra_top_border
+		self.create_sprite()
 		# cells colors
 		self.colors = {2: (100, 100, 100), 4: (200, 200, 0), 8: (255, 105, 0), 16: (255, 43, 0),
 		               32: (21, 171, 0), 64: (178, 102, 255), 128: (255, 8, 127), 256: (46, 139, 90),
@@ -58,21 +73,42 @@ class Board:
 		screen.blit(text, (text_x, text_y))
 
 	def display_score(self):
-		k = .8 if self.enable_to_revert else 1
-		pygame.draw.rect(screen, pygame.Color('white'), (self.border, 0, int(self.width * self.cell_size * k), self.extra_top_border))
+		k = .6
+		pygame.draw.rect(screen, pygame.Color('white'), (self.border + int(self.width * self.cell_size * .2), 0, int(self.width * self.cell_size * k), self.extra_top_border))
 		fz = self.font_size + 5 - len(str(self.score))
 		font = pygame.font.Font(None, fz)
 		text = font.render(str(self.score), 1, pygame.Color('black'))
 		text_w, text_h = text.get_width(), text.get_height()
-		text_x = self.border + (int(self.width * self.cell_size * k) - text_w) // 2
+		text_x = self.border + int(self.width * self.cell_size * .2) + (int(self.width * self.cell_size * k) - text_w) // 2
 		text_y = (self.extra_top_border - text_h) // 2
 		screen.blit(text, (text_x, text_y))
 
+	def create_sprite(self):
+		self.all_sprites = pygame.sprite.Group()
+		image = load_image('arrow.png', (0, 0, 0, 0))
+		self.arrow = pygame.sprite.Sprite(self.all_sprites)
+		self.arrow.image = image
+		self.arrow.rect = self.arrow.image.get_rect()
+		self.update_revert_button()
+
+		image = load_image('new_game.jpg', (0, 0, 0, 0))
+		self.new_game = pygame.sprite.Sprite(self.all_sprites)
+		self.new_game.image = image
+		self.new_game.rect = self.new_game.image.get_rect()
+		self.new_game.rect.x = self.border
+		self.new_game.rect.y = 0
+
+
 	def update_revert_button(self):
 		if not self.enable_to_revert:
-			return
-		color = (255, 255, 255)
-		pygame.draw.rect(screen, color, (self.revert_x, self.revert_y, self.revert_w, self.revert_h))
+			self.arrow.rect.x = -1000
+			self.arrow.rect.y = -1000
+		else:
+			self.arrow.rect.x = self.revert_x
+			self.arrow.rect.y = self.revert_y
+		self.all_sprites.draw(screen)
+		# color = (255, 255, 255)
+		# pygame.draw.rect(screen, color, (self.revert_x, self.revert_y, self.revert_w, self.revert_h))
 
 	def render(self):
 		if not self.running:
@@ -98,11 +134,12 @@ class Board:
 		if empty:
 			x, y = random.choice(empty)
 			self.board[y][x] = [random.choice([2, 4]), 1]
-			if not self.check_if_lose():
+			if self.check_if_lose():
+				self.lose()
+			elif self.check_if_win():
+				self.win()
+			else:
 				self.enable_to_revert = True
-				return
-		self.render()
-		self.lose()
 
 	def revert(self):
 		if not self.enable_to_revert:
@@ -150,19 +187,18 @@ class Board:
 		self.running = False
 
 	def win(self):
-		text = 'Вы выиграли'
+		text = 'Вы выиграли!'
 		self.alert(text)
 		self.running = False
 
 	def alert(self, text):
-		fz = self.width * 7
+		fz = self.cell_size // 2 + self.width
 		font = pygame.font.Font(None, fz)
 		text = font.render(text, 1, pygame.Color('white'))
 		text_w, text_h = text.get_width(), text.get_height()
-		text_x = (self.cell_size * self.width + self.border - text_w) // 2
-		text_y = (self.cell_size * self.width + self.border - text_h) // 2 + self.extra_top_border
-		pygame.draw.rect(screen, (200, 0, 0), (text_x - 5, text_y - 5, text_w + 10, text_h + 10))
-		pygame.draw.rect(screen, (0, 200, 0), (text_x - 5, text_y - 5, text_w + 10, text_h + 10), 4)
+		text_x = (self.width * self.cell_size - text_w) // 2 + self.border
+		text_y = (self.width * self.cell_size + self.extra_top_border - text_h) // 2 + self.border
+		screen.fill((0, 0, 0))
 		screen.blit(text, (text_x, text_y))
 		pygame.display.flip()
 
