@@ -20,7 +20,7 @@ def load_image(name, colorkey=None):
 
 class Board:
 	# создание поля
-	def __init__(self, width):
+	def __init__(self, width, autoload=1):
 		self.width = width
 		self.board = [[[0, 1] for __ in range(width)] for _ in range(width)]
 		# sizes
@@ -34,9 +34,10 @@ class Board:
 		self.running = True
 		self.path = 'saved.json'
 		self.last = copy.deepcopy(self.board)
+		self.clock = pygame.time.Clock()
 		# some methods
 		self.create_screen()
-		if not self.load_game():
+		if not autoload or not self.load_game():
 			self.next_move()
 			self.next_move()
 		# revert button
@@ -232,9 +233,6 @@ class Board:
 		self.alert(text)
 		self.running = False
 
-	def new_game(self):
-		self.__init__()
-
 	def alert(self, text):
 		fz = self.cell_size // 2 + self.width
 		font = pygame.font.Font(None, fz)
@@ -278,6 +276,7 @@ class Board:
 						self.score += item * 2
 		if auto_render:
 			self.render()
+			self.clock.tick(30)
 		if before != board:
 			self.merge(vector, board, auto_render)
 
@@ -306,7 +305,7 @@ class Board:
 		if self.revert_x <= x <= self.revert_x + self.revert_w and self.revert_y <= y <= self.revert_y + self.revert_h:
 			self.revert()
 		elif self.border <= x <= self.border + 40 and 0 <= y <= 40:
-			self.__init__(self.width)
+			self.__init__(self.width, 0)
 
 
 pygame.init()
