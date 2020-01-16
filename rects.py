@@ -26,8 +26,8 @@ class Board:
 		self.border = 20
 		self.extra_top_border = 40
 		self.extra_bottom_border = 0
-		self.font_size = 30
 		self.cell_size = 70
+		self.font_size = self.cell_size // 2
 		# default values
 		self.score = 0
 		self.running = True
@@ -38,11 +38,12 @@ class Board:
 		self.next_move()
 		# revert button
 		self.enable_to_revert = False
-		self.revert_x = int(self.width * self.cell_size * .2 - self.extra_top_border + self.border) // 2 + self.width * self.cell_size * .8 + self.border
+		self.revert_x = int((self.width * self.cell_size * .2 - self.extra_top_border + self.border) // 2 + self.width * self.cell_size * .8 + self.border)
 		self.revert_y = 0
+		print(self.revert_x)
 		self.revert_w = self.extra_top_border
 		self.revert_h = self.extra_top_border
-		self.create_sprite()
+		# self.create_sprite()
 		# cells colors
 		self.colors = {2: (100, 100, 100), 4: (200, 200, 0), 8: (255, 105, 0), 16: (255, 43, 0),
 		               32: (21, 171, 0), 64: (178, 102, 255), 128: (255, 8, 127), 256: (46, 139, 90),
@@ -99,15 +100,31 @@ class Board:
 		self.new_game.rect.y = 0
 
 	def update_revert_button(self):
-		if not self.enable_to_revert:
-			self.arrow.rect.x = -1000
-			self.arrow.rect.y = -1000
-		else:
-			self.arrow.rect.x = self.revert_x
-			self.arrow.rect.y = self.revert_y
-		self.all_sprites.draw(screen)
-		# color = (255, 255, 255)
-		# pygame.draw.rect(screen, color, (self.revert_x, self.revert_y, self.revert_w, self.revert_h))
+		# if not self.enable_to_revert:
+		# 	self.arrow.rect.x = -1000
+		# 	self.arrow.rect.y = -1000
+		# else:
+		# 	self.arrow.rect.x = self.revert_x
+		# 	self.arrow.rect.y = self.revert_y
+		# self.all_sprites.draw(screen)
+		color = (255, 255, 255)
+		pygame.draw.rect(screen, color, (self.revert_x, self.revert_y, self.revert_w, self.revert_h))
+		pygame.draw.rect(screen, color, (self.border, 0, self.extra_top_border, self.extra_top_border))
+
+		fz = self.cell_size // 3
+		font = pygame.font.Font(None, fz)
+
+		text = font.render('Undo', 1, pygame.Color('black'))
+		text_w, text_h = text.get_width(), text.get_height()
+		text_x = (self.extra_top_border - text_w) // 2 + self.revert_x
+		text_y = (self.extra_top_border - text_h) // 2
+		screen.blit(text, (text_x, text_y))
+
+		text = font.render('New', 1, pygame.Color('black'))
+		text_w, text_h = text.get_width(), text.get_height()
+		text_x = (self.extra_top_border - text_w) // 2 + self.border
+		text_y = (self.extra_top_border - text_h) // 2
+		screen.blit(text, (text_x, text_y))
 
 	def render(self):
 		if not self.running:
@@ -181,7 +198,7 @@ class Board:
 		return board
 
 	def lose(self):
-		text = 'Вы проиграли'
+		text = 'Вы проиграли...'
 		self.alert(text)
 		self.running = False
 
