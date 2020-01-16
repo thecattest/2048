@@ -2,6 +2,7 @@ import pygame
 import random
 import copy
 import os
+import json
 
 
 def load_image(name, colorkey=None):
@@ -31,16 +32,19 @@ class Board:
 		# default values
 		self.score = 0
 		self.running = True
+		self.path = 'saved.json'
 		self.last = copy.deepcopy(self.board)
 		# some methods
 		self.create_screen()
-		self.next_move()
-		self.next_move()
+		if not self.load_game():
+			self.next_move()
+			self.next_move()
 		# revert button
-		self.enable_to_revert = False
+			self.enable_to_revert = False
+		else:
+			self.enable_to_revert = True
 		self.revert_x = int((self.width * self.cell_size * .2 - self.extra_top_border + self.border) // 2 + self.width * self.cell_size * .8 + self.border)
 		self.revert_y = 0
-		print(self.revert_x)
 		self.revert_w = self.extra_top_border
 		self.revert_h = self.extra_top_border
 		# self.create_sprite()
@@ -156,6 +160,23 @@ class Board:
 				self.win()
 			else:
 				self.enable_to_revert = True
+				self.save_game()
+
+	def save_game(self):
+		try:
+			with open(self.path, 'w') as f:
+				json.dump([self.board, self.score, self.last], f)
+		except Exception:
+			print('не сохранилось...')
+
+	def load_game(self):
+		try:
+			with open(self.path) as f:
+				self.board, self.score, self.last = json.load(f)
+				return True
+		except Exception as e:
+			print('не загрузилось...', e)
+			return False
 
 	def revert(self):
 		if not self.enable_to_revert:
@@ -201,6 +222,10 @@ class Board:
 		text = 'Вы проиграли...'
 		self.alert(text)
 		self.running = False
+		try:
+			os.remove(self.path)
+		except Exception:
+			pass
 
 	def win(self):
 		text = 'Вы выиграли!'
