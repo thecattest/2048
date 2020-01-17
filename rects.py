@@ -173,8 +173,14 @@ class Board:
 	def load_game(self):
 		try:
 			with open(self.path) as f:
-				self.board, self.score, self.last = json.load(f)
-				return True
+				board, score, last = json.load(f)
+				if self.width == len(board):
+					self.board = board
+					self.score = score
+					self.last = last
+					return True
+				else:
+					return False
 		except Exception as e:
 			print('не загрузилось...', e)
 			return False
@@ -240,7 +246,17 @@ class Board:
 		text_w, text_h = text.get_width(), text.get_height()
 		text_x = (self.width * self.cell_size - text_w) // 2 + self.border
 		text_y = (self.width * self.cell_size + self.extra_top_border - text_h) // 2 + self.border
+
 		screen.fill((0, 0, 0))
+		screen.blit(text, (text_x, text_y))
+
+		fz = self.cell_size // 5 + self.width
+		font = pygame.font.Font(None, fz)
+		text = font.render('Нажмите пробел чтобы начать заново', 1, pygame.Color('white'))
+		text_y += text_h + 10
+		text_w, text_h = text.get_width(), text.get_height()
+		text_x = (self.width * self.cell_size - text_w) // 2 + self.border
+
 		screen.blit(text, (text_x, text_y))
 		pygame.display.flip()
 
@@ -281,7 +297,10 @@ class Board:
 			self.merge(vector, board, auto_render)
 
 	def move(self, key):
-		if key == 273:
+		if key == 32:
+			self.__init__(self.width, 0)
+			return
+		elif key == 273:
 			vector = (-1, 0)
 		elif key == 274:
 			vector = (1, 0)
