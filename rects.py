@@ -300,31 +300,39 @@ class Board:
 		if key == 32:
 			self.__init__(self.width, 0)
 			return
-		elif key == 273:
+		elif key in [273, 119]:
 			vector = (-1, 0)
-		elif key == 274:
+		elif key in [274, 115]:
 			vector = (1, 0)
-		elif key == 275:
+		elif key in [275, 100]:
 			vector = (0, 1)
-		elif key == 276:
+		elif key in [276, 97]:
 			vector = (0, -1)
 		else:
-			vector = 0
-		if key in range(273, 277):
-			self.last = copy.deepcopy(self.board)
-			self.board = list(list([j[0], 1] for j in i) for i in self.board)
-			board_before = copy.deepcopy(self.board)
-			self.merge(vector, self.board, 1)
-			self.board = list(list([j[0], 1] for j in i) for i in self.board)
-			if board_before != self.board:
-				self.next_move()
+			return
+		self.last = copy.deepcopy(self.board)
+		self.board = list(list([j[0], 1] for j in i) for i in self.board)
+		board_before = copy.deepcopy(self.board)
+		self.merge(vector, self.board, 1)
+		self.board = list(list([j[0], 1] for j in i) for i in self.board)
+		if board_before != self.board:
+			self.next_move()
 
-	def on_click(self, pos):
+	def on_click(self, pos, button):
 		x, y = pos
 		if self.revert_x <= x <= self.revert_x + self.revert_w and self.revert_y <= y <= self.revert_y + self.revert_h:
 			self.revert()
 		elif self.border <= x <= self.border + 40 and 0 <= y <= 40:
 			self.__init__(self.width, 0)
+		else:
+			if button == 1:
+				self.move(276)
+			elif button == 3:
+				self.move(275)
+			elif button == 4:
+				self.move(273)
+			elif button == 5:
+				self.move(274)
 
 
 pygame.init()
@@ -338,8 +346,9 @@ while running:
 		if event.type == pygame.QUIT:
 			running = False
 		if event.type == pygame.KEYUP:
+			print(event.key)
 			board.move(event.key)
 		if event.type == pygame.MOUSEBUTTONUP:
-			board.on_click(event.pos)
+			board.on_click(event.pos, event.button)
 	board.render()
 pygame.quit()
