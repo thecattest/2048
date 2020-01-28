@@ -1,8 +1,10 @@
-import pygame, random, copy
+import pygame
+import random
+import copy
 from time import clock 
 
 pygame.init()
-size = width, height = 400, 550
+size = width, height = 400, 610
 screen = pygame.display.set_mode(size)
 x_pos  = 0
 v = 10
@@ -14,12 +16,19 @@ running = True
 for i in range(60):
     if i % 2 == 0:
         pygame.draw.line(screen, pygame.Color("white"), (i * 10, 340), (10 + i * 10, 340), 5)
+
+g = pygame.font.SysFont("comicsansms", 13)
+
 pygame.draw.rect(screen, pygame.Color("gray"), (40, 10, 60, 80))
 pygame.draw.rect(screen, pygame.Color("gray"), (130, 10, 60, 80))
 pygame.draw.rect(screen, pygame.Color("gray"), (220, 10, 60, 80))
 pygame.draw.rect(screen, pygame.Color("gray"), (310, 10, 60, 80))
 pygame.draw.rect(screen, pygame.Color("gray"), (310, 390, 60, 80))
-g = pygame.font.SysFont("comicsansms", 13)
+pygame.draw.rect(screen, pygame.Color("white"), (180, 565, 40, 40))
+restart_text = g.render("New", True, (0, 0, 0))
+screen.blit(restart_text, (185, 575))
+
+
 text = g.render("DISCARD", True, (50, 50, 100))
 tex = g.render("(X2)", True, (50, 50, 100))
 
@@ -32,6 +41,7 @@ pygame.draw.rect(screen, pygame.Color("white"), (40, 500, 320,48))
 screen.blit(text_spot, (170, 507))
 pygame.draw.rect(screen, pygame.Color("gray"), (120, 390, 60, 80))
 col = [2, 4, 8, 16, 64]
+
 
 def create_card(number, i, j):
     if number == 2:
@@ -129,6 +139,7 @@ multiply_spot = 1
 lose = False
 up = False
 win = False
+maybe_restart = False
 
 while running:
     clock.tick(fps)
@@ -142,6 +153,9 @@ while running:
         pygame.draw.rect(screen, pygame.Color("gray"), (310, 10, 60, 80))
         pygame.draw.rect(screen, pygame.Color(col_disc_1), (310, 390, 60, 40))
         pygame.draw.rect(screen, pygame.Color(col_disc_2), (310, 430, 60, 40))
+        pygame.draw.rect(screen, pygame.Color("white"), (180, 565, 40, 40))
+        restart_text = g.render("New", True, (0, 0, 0))
+        screen.blit(restart_text, (185, 575))
         if count_discard == 0:
             screen.blit(text, (312, 395))
             screen.blit(tex, (312, 410))
@@ -163,17 +177,66 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == pygame.MOUSEBUTTONDOWN and lose is False:
+        if event.type == pygame.MOUSEBUTTONDOWN:
             k = pygame.mouse.get_pos()
-            if k[0] >= 120 and k[0] <= 180 and k[1] >= 390 and k[1] <= 470:
+            if k[0] >= 120 and k[0] <= 180 and k[1] >= 390 and k[1] <= 470 and lose is False:
                 f = 1
                 up = True
-                
+            elif k[0] >= 180 and k[0] <= 220 and k[1] >= 565 and k[1] <= 605:
+                g = pygame.font.SysFont("comicsansms", 13)
+                if k[0] >= 180 and k[0] <= 220 and k[1] >= 565 and k[1] <= 605:
+                    pygame.draw.rect(screen, pygame.Color("black"), (0, 0, 40, 40))
+                    lose = False
+                    up = False
+                    win = False
+                    pygame.draw.rect(screen, pygame.Color("black"), (0, 0, 400, 610))
+                    for i in range(60):
+                        if i % 2 == 0:
+                            pygame.draw.line(screen, pygame.Color("white"), (i * 10, 340), (10 + i * 10, 340), 5)
+                    a = random.choice(col[:4])
+                    b = random.choice(col[:4])
+                    create_card(a, 0, 0)
+                    create_card(b, 70, 0)
+                    x = 10
+                    y = 10
+                    old_cards_first_col = {}
+                    old_cards_second_col = {}
+                    old_cards_third_col = {}
+                    old_cards_fourth_col = {}
+                    count_discard = 0
+                    col_disc_1 = "gray"
+                    col_disc_2 = "gray"
+                    first_col = [0]
+                    second_col = [0]
+                    third_col = [0]
+                    fourth_col = [0]
+                    first_same = False
+                    second_same = False
+                    third_same = False
+                    fourth_same = False
+                    all_cards = set()
+                    multiply_spot = 1
+                    lose = False
+                    up = False
+                    win = False
+                    pygame.draw.rect(screen, pygame.Color("gray"), (40, 10, 60, 80))
+                    pygame.draw.rect(screen, pygame.Color("gray"), (130, 10, 60, 80))
+                    pygame.draw.rect(screen, pygame.Color("gray"), (220, 10, 60, 80))
+                    pygame.draw.rect(screen, pygame.Color("gray"), (310, 10, 60, 80))
+                    pygame.draw.rect(screen, pygame.Color("gray"), (310, 390, 60, 80))
+                    pygame.draw.rect(screen, pygame.Color("white"), (180, 565, 40, 40))
+                    screen.blit(restart_text, (185, 575))
+                    screen.blit(text, (312, 395))
+                    screen.blit(tex, (312, 410))
+                    spot = 0
+                    text_spot = g1.render(str(spot), True, (0, 200, 5))
+                    pygame.draw.rect(screen, pygame.Color("white"), (40, 500, 320,48))
+                    screen.blit(text_spot, (170, 507))
+
+
         if event.type == pygame.MOUSEBUTTONUP and lose is False and up:
             f = 0
             up = False
-            print(all_cards)
-
             k = pygame.mouse.get_pos()
             if (k[0] >= 40 and k[0] <= 100 and k[1] >= (10 + 30 * (len(first_col) - 1)) and
                 k[1] <= (90 + 30 * (len(first_col) - 1)) and (len(first_col) < 8 or b == first_col[-1])):
@@ -266,7 +329,7 @@ while running:
 
             x = 10
             y = 10
-            
+
     if f == 1:
         x += ((pygame.mouse.get_pos()[0] - k[0]))
         y += ((pygame.mouse.get_pos()[1] - k[1]))
@@ -399,21 +462,25 @@ while running:
         elif fourth_col[-2] != fourth_col[-1]:
             fourth_same = False
             multiply_spot = 1
-            
+
     if (len(first_col) + len(second_col) + len(third_col) + len(fourth_col)) == 32 and count_discard == 2:
             if b != first_col[-1] and b!= second_col[-1] and b != third_col[-1] and b != fourth_col[-1]:
                 lose = True
                 screen.fill((0, 0, 0))
                 g = pygame.font.SysFont("comicsansms", 30)
-                text = g.render("YOU LOSE(((", True, (10, 200, 0))
-                screen.blit(text, (160, 507))
-                
+                text_lose = g.render("YOU LOSE(((", True, (10, 200, 0))
+                screen.blit(text_lose, (160, 507))
+                pygame.draw.rect(screen, pygame.Color("white"), (180, 565, 40, 40))
+                screen.blit(restart_text, (185, 575))
+
     elif win:
         lose = True
         screen.fill((0, 0, 0))
         g = pygame.font.SysFont("comicsansms", 30)
         text = g.render("YOU WIN!!!", True, (255, 255, 0))
         screen.blit(text, (50, 70))
+        pygame.draw.rect(screen, pygame.Color("white"), (180, 565, 40, 40))
+        screen.blit(restart_text, (185, 575))
     pygame.display.flip()
 
 pygame.quit()
